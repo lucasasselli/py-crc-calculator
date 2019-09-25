@@ -19,9 +19,12 @@ def calc_crc(width, poly, seed, data, size):
 
     mask = (1 << width) - 1
 
-    if(args.debug):
+    if args.debug:
         print(("Poly: {:0" + str(width) + "b}").format(poly))
         print(("Seed: {:0" + str(width) + "b}").format(seed))
+
+    if args.forward:
+        poly = poly ^ 1
 
     for i in range(1, size+1):
 
@@ -31,20 +34,28 @@ def calc_crc(width, poly, seed, data, size):
             bit_in = (data >> size - i) & 1
 
         bit_out = (lfsr >> (width - 1)) & 1
-        shifted = ((lfsr << 1) | bit_in) & mask;
 
         if(args.debug):
-            print_crc(width, poly, lfsr)
+            print(("{} -> {:0" + str(width) + "b} -> {}").format(bit_in, lfsr, bit_out))
+
+        if args.forward:
+            # Forward
+            bit_out = bit_in ^ bit_out
+            shifted = ((lfsr << 1) | bit_out) & mask;
+        else:
+            # Non-forward
+            shifted = ((lfsr << 1) | bit_in) & mask;
 
         if bit_out:
-            if args.forward:
-                # Forward
-                lfsr = shifted ^ poly ^ bit_in
-            else:
-                # Non-forward
-                lfsr = shifted ^ poly
+            lfsr = shifted ^ poly
         else:
             lfsr = shifted
+
+        if args.debug:
+            print(("     {:0" + str(width) + "b}{}").format(lfsr, "*" if bit_out else ""))
+
+
+
 
 
     return lfsr
